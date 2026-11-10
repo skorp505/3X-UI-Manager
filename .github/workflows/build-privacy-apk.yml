@@ -40,10 +40,17 @@ jobs:
           unzip -q /tmp/gradle.zip -d /tmp
       - name: Build F-Droid release APK
         run: /tmp/gradle-8.10.2/bin/gradle --no-daemon assembleFdroidRelease
-      - name: Upload APK
+      - name: Sign APK for direct installation
+        run: |
+          keytool -genkeypair -v -keystore /tmp/3x-ui-manager-ci.jks -storepass changeit -keypass changeit -alias ci-release -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=3X UI Manager CI"
+          APK="$(find app/build/outputs/apk/fdroid/release -name '*.apk' -print -quit)"
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -f 4 "$APK" /tmp/3x-ui-manager-aligned.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" sign --ks /tmp/3x-ui-manager-ci.jks --ks-pass pass:changeit --key-pass pass:changeit --out /tmp/3X-UI-Manager.apk /tmp/3x-ui-manager-aligned.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose /tmp/3X-UI-Manager.apk
+      - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: 3x-ui-manager-fdroid-release
-          path: app/build/outputs/apk/fdroid/release/*.apk
+          name: 3x-ui-manager-signed-apk
+          path: /tmp/3X-UI-Manager.apk
           if-no-files-found: error
           retention-days: 14
