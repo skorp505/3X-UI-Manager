@@ -1,0 +1,41 @@
+name: Build privacy APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/build-privacy-apk.yml'
+      - '**/*.gradle'
+      - '**/*.gradle.kts'
+      - 'app/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install SDK components
+        run: sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build F-Droid release APK
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleFdroidRelease
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: 3x-ui-manager-fdroid-release
+          path: app/build/outputs/apk/fdroid/release/*.apk
+          if-no-files-found: error
+          retention-days: 14
