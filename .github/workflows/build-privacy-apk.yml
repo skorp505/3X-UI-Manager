@@ -34,10 +34,12 @@ jobs:
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
-      - name: Build F-Droid release APK
+      - name: Install Gradle 8.10.2
         run: |
-          chmod +x gradlew
-          ./gradlew --no-daemon assembleFdroidRelease
+          curl -L --fail https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp
+      - name: Build F-Droid release APK
+        run: /tmp/gradle-8.10.2/bin/gradle --no-daemon assembleFdroidRelease
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
